@@ -1,3 +1,4 @@
-float32 mouth_sensitivity
-float32 eye_left_sensitivity
-float32 eye_right_sensitivity
+float32 mouth_speed
+float32 eye_left_speed
+float32 eye_right_speed
+float32 heading_speed

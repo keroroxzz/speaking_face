@@ -46,10 +46,12 @@ float mouth_sensitivity=0.5;
 float eye_left_sensitivity=0.5;
 float eye_right_sensitivity=0.5;
 
+speaking_face::ShapeConfig heading = shape(1.0, 1.0, 0.3, 0.0);
 speaking_face::ShapeConfig eye_left = shape(1.0, 1.0, 0.3, 0.0);
 speaking_face::ShapeConfig eye_right = shape(1.0, 1.0, 0.3, 0.0);
 speaking_face::ShapeConfig mouth_shape = shape(1.0, 1.0, 0.2, 0.0);
 
+speaking_face::ShapeConfig heading_target = shape(1.0, 1.0, 0.3, 0.0);
 speaking_face::ShapeConfig eye_left_target = shape(1.0, 1.0, 0.3, 0.0);
 speaking_face::ShapeConfig eye_right_target = shape(1.0, 1.0, 0.3, 0.0);
 speaking_face::ShapeConfig mouth_shape_target = shape(1.0, 1.0, 0.2, 0.0);

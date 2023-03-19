@@ -21,7 +21,16 @@ void RenderScene(void)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluLookAt(0.0, 0.0, -20.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0);
+    gluLookAt(
+        heading.offset_x,
+        heading.offset_y, 
+        -20.0, 
+        heading.offset_x, 
+        heading.offset_y, 
+        1.0, 
+        sin(heading.rotation), 
+        cos(heading.rotation), 
+        0.0);
     glGetFloatv(GL_MODELVIEW_MATRIX, model_view);
     m3dMatrixMultiply44(model_view_proj, projection, model_view);
 
@@ -34,6 +43,8 @@ void RenderScene(void)
     eye_shader->setUniform("eye_l_t", UNI_VEC_3, (float*)&eye_left+4);
     eye_shader->setUniform("eye_r_t", UNI_VEC_3, (float*)&eye_right+4);
     eye_shader->setUniform("mouth_t", UNI_VEC_3, (float*)&mouth_shape+4);
+
+    eye_shader->setUniform("eye_distance", UNI_FLOAT_1, &heading.width);
 
     glPushMatrix();
 
@@ -125,9 +136,10 @@ void idle()
     ros::spinOnce();
     ReloadShaders();
 
-    eye_left = eye_left*(1.0-face_param.eye_left_sensitivity) + eye_left_target*face_param.eye_left_sensitivity;
-    eye_right = eye_right*(1.0-face_param.eye_right_sensitivity) + eye_right_target*face_param.eye_right_sensitivity;
-    mouth_shape = mouth_shape*(1.0-face_param.mouth_sensitivity) + mouth_shape_target*face_param.mouth_sensitivity;
+    eye_left = eye_left*(1.0-face_param.eye_left_speed) + eye_left_target*face_param.eye_left_speed;
+    eye_right = eye_right*(1.0-face_param.eye_right_speed) + eye_right_target*face_param.eye_right_speed;
+    mouth_shape = mouth_shape*(1.0-face_param.mouth_speed) + mouth_shape_target*face_param.mouth_speed;
+    heading = heading*(1.0-face_param.heading_speed) + heading_target*face_param.heading_speed;
 
     glutPostRedisplay();
     usleep(10);
@@ -148,6 +160,9 @@ void mouseHover(int x_, int y_)
 void mouse(int button, int state, int x, int y)
 {
 }
+void heading_config_cb(const speaking_face::ShapeConfig::ConstPtr msg){
+    copy(heading_target,*msg);
+}
 
 void face_config_cb(const speaking_face::FaceConfig::ConstPtr msg){
     copy(eye_left_target,msg->eye_left);
@@ -156,19 +171,20 @@ void face_config_cb(const speaking_face::FaceConfig::ConstPtr msg){
 }
 
 void face_param_cb(const speaking_face::FaceParam::ConstPtr msg){
-    face_param.eye_left_sensitivity = msg->eye_left_sensitivity;
-    face_param.eye_right_sensitivity = msg->eye_right_sensitivity;
-    face_param.mouth_sensitivity = msg->mouth_sensitivity;
+    face_param.eye_left_speed = msg->eye_left_speed;
+    face_param.eye_right_speed = msg->eye_right_speed;
+    face_param.mouth_speed = msg->mouth_speed;
+    face_param.heading_speed = msg->heading_speed;
 }
 
 int main(int argc, char* argv[])
 {
     ros::init(argc, argv, "RobotFace");
     ros::NodeHandle nh;
-    ros::Subscriber sub_face;
-    ros::Subscriber sub_param;
-    sub_face = nh.subscribe("/speaking_face/face_config", 10, face_config_cb);
-    sub_param = nh.subscribe("/speaking_face/face_param", 10, face_param_cb);
+    ros::Subscriber sub_face, sub_param, sub_heading;
+    sub_heading = nh.subscribe("/speaking_face/heading_config", 1, heading_config_cb);
+    sub_face = nh.subscribe("/speaking_face/face_config", 1, face_config_cb);
+    sub_param = nh.subscribe("/speaking_face/face_param", 1, face_param_cb);
 
     // Read the parameter
     if (!nh.getParam ("/robot_face/full_screen", full_screen))

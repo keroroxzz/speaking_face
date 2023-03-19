@@ -11,6 +11,8 @@ uniform vec3 eye_l_t; // {rotation, offset x, offset y}
 uniform vec3 eye_r_t;
 uniform vec3 mouth_t;
 
+uniform float eye_distance;
+
 float sq(float x)
 {
     return x*x;
@@ -27,16 +29,13 @@ vec2 translate(vec2 nc, vec3 tf){
 
 void main(void) {
 
-    // FragColor = vec4(position.xyz, 1.0);
-    // return;ㄋ
-
     // left eye
-    vec2 ln = translate(position.xy, eye_l_t);
+    vec2 ln = translate(position.xy, eye_l_t-vec3(0.0, eye_distance, 0.0));
     float le_field = sq(ln.x/(eye_l.x*eye_l.z));
     le_field = le_field + sq((ln.y/(eye_l.y*eye_l.z)) - eye_l.w*le_field);
 
     //right eye
-    vec2 rn = translate(position.xy, eye_r_t);
+    vec2 rn = translate(position.xy, eye_r_t+vec3(0.0, eye_distance, 0.0));
     float re_field = sq(rn.x/(eye_r.x*eye_r.z));
     re_field = re_field + sq((rn.y/(eye_r.y*eye_r.z)) - eye_r.w*re_field);
 
