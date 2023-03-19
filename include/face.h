@@ -1,3 +1,9 @@
+/*
+    Robot Face Animation for ROS
+    Header file of the main program
+    By Brian Tu
+    Date : 2023/03/20
+*/
 
 #define _CRT_SECURE_NO_WARNINGS
 #define FREEGLUT_STATIC
@@ -29,14 +35,14 @@ std::string path = ros::package::getPath("speaking_face");
 Shader *eye_shader;
 
 // glwindow
-M3DVector3f pmouse = { 0.0, 0.0, 1.0 };
-
 bool full_screen;
+M3DVector3f pmouse = { 0.0, 0.0, 1.0 };
 GLdouble aspect, horizontal, vertical;
 M3DMatrix44f projection, model_view, model_view_proj;
 GLint windowWidth = 1024;               // window size
 GLint windowHeight = 512;
 
+// rendering rect
 GLuint facerect_vertexbuffer;
 static const GLfloat face_rect_buffer_data[] = {
    10.0f, 10.0f, 0.0f,
@@ -48,10 +54,6 @@ static const GLfloat face_rect_buffer_data[] = {
 };
 
 // face configuration
-float mouth_sensitivity=0.5;
-float eye_left_sensitivity=0.5;
-float eye_right_sensitivity=0.5;
-
 speaking_face::ShapeConfig heading = shape(0.0, 0.0, 0.0, 0.0);
 speaking_face::ShapeConfig eye_left = shape(1.0, 1.0, 0.3, 0.0);
 speaking_face::ShapeConfig eye_right = shape(1.0, 1.0, 0.3, 0.0);

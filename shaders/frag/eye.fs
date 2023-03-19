@@ -1,3 +1,9 @@
+/*
+    Robot Face Animation for ROS
+    By Brian Tu
+    Date : 2023/03/20
+*/
+
 #version 330 core
 in vec4 position;
 
@@ -27,22 +33,18 @@ vec2 translate(vec2 nc, vec3 tf){
     return ret;
 }
 
+float shapeField(vec2 position, vec3 tf, vec3 offset, vec4 config){
+    
+    vec2 ln = translate(position.xy, tf+offset);
+    float le_field = sq(ln.x/(config.x*config.z));
+    return le_field + sq((ln.y/(config.y*config.z)) - config.w*le_field);
+}
+
 void main(void) {
 
-    // left eye
-    vec2 ln = translate(position.xy, eye_l_t-vec3(0.0, eye_distance, 0.0));
-    float le_field = sq(ln.x/(eye_l.x*eye_l.z));
-    le_field = le_field + sq((ln.y/(eye_l.y*eye_l.z)) - eye_l.w*le_field);
-
-    //right eye
-    vec2 rn = translate(position.xy, eye_r_t+vec3(0.0, eye_distance, 0.0));
-    float re_field = sq(rn.x/(eye_r.x*eye_r.z));
-    re_field = re_field + sq((rn.y/(eye_r.y*eye_r.z)) - eye_r.w*re_field);
-
-    // mouth
-    vec2 mn = translate(position.xy, mouth_t);
-    float m_field = sq(mn.x/(mouth.x*mouth.z));
-    m_field = m_field + sq((mn.y/(mouth.y*mouth.z)) - mouth.w*m_field);
+    float le_field = shapeField(position.xy, eye_l_t, -vec3(0.0, eye_distance, 0.0), eye_l);
+    float re_field = shapeField(position.xy, eye_r_t, vec3(0.0, eye_distance, 0.0), eye_r);
+    float m_field = shapeField(position.xy, mouth_t, vec3(0.0, 0.0, 0.0), mouth);
     
     // fuse
     float c = min(min(le_field, re_field), m_field);

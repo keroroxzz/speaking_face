@@ -1,3 +1,9 @@
+/*
+    Robot Face Animation Msg Tool
+    By Brian Tu
+    Date : 2023/03/20
+*/
+
 #include "msg_tool.h"
 
 ShapeConfig shape(float widht, float height, float size, float curve, float rot, float offset_x, float offset_y){

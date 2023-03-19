@@ -1,13 +1,12 @@
 /*
     Robot Face Animation for ROS
     By Brian Tu
-    Date : 2023/03/18
+    Date : 2023/03/20
 */
 #include "face.h"
 
 void RenderScene(void)
 {
-    
     #ifdef MEASURE_TIME
     pclock = chrono::high_resolution_clock::now();
     #endif
@@ -40,10 +39,9 @@ void RenderScene(void)
     eye_shader->setUniform("eye_r", UNI_VEC_4, &eye_right);
     eye_shader->setUniform("mouth", UNI_VEC_4, &mouth_shape);
 
-    eye_shader->setUniform("eye_l_t", UNI_VEC_3, (float*)&eye_left+4);
-    eye_shader->setUniform("eye_r_t", UNI_VEC_3, (float*)&eye_right+4);
-    eye_shader->setUniform("mouth_t", UNI_VEC_3, (float*)&mouth_shape+4);
-
+    eye_shader->setUniform("eye_l_t", UNI_VEC_3, &eye_left.rotation);
+    eye_shader->setUniform("eye_r_t", UNI_VEC_3, &eye_right.rotation);
+    eye_shader->setUniform("mouth_t", UNI_VEC_3, &mouth_shape.rotation);
     eye_shader->setUniform("eye_distance", UNI_FLOAT_1, &heading.width);
 
     glPushMatrix();
@@ -54,7 +52,6 @@ void RenderScene(void)
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glDisableVertexAttribArray(0);
 
-    // glutSolidSphere(10.0f, 100, 100);
     glPopMatrix();
 
     // Flush drawing commands

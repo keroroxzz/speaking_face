@@ -1,3 +1,8 @@
+/*
+    Robot Face Animation Msg Tool
+    By Brian Tu
+    Date : 2023/03/20
+*/
 
 #include <ros/ros.h>
 #include <speaking_face/FaceParam.h>

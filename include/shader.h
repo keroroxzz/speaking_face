@@ -1,3 +1,9 @@
+/*
+    OpenGL Shader Wrapping Class
+    By Brian Tu
+    Date : 2023/03/20
+*/
+
 #pragma once
 
 #include "opengl_basic.h"

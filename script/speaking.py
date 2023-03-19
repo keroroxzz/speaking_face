@@ -4,7 +4,7 @@ import os
 import cv2
 import math
 import pyaudio
-import numpy as nps
+import numpy as np
 import copy as copy_module
 
 from io import BytesIO

@@ -1,4 +1,9 @@
-#include "opengl_basic.h"
+/*
+    OpenGL Shader Wrapping Class
+    By Brian Tu
+    Date : 2023/03/20
+*/
+
 #include "shader.h"
 
 #define _CRT_SECURE_NO_WARNINGS
