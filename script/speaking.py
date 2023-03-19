@@ -1,7 +1,9 @@
-#! /usr/bin/env python3
+#! /home/oreo/.pyenv/shims/python3
 
-import os
+import os, sys
+sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import cv2
+sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import math
 import pyaudio
 import numpy as np
@@ -17,8 +19,8 @@ from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from speaking_face.msg import FaceConfig, FaceParam, ShapeConfig
 
-from cv_bridge import CvBridge
 
+from cv_bridge import CvBridge
 cvb = CvBridge()
 pack = rospkg.RosPack()
 path = pack.get_path('speaking_face')
@@ -31,21 +33,21 @@ class FaceManager:
 
         self._DOWN_SAMPLE_SIZE = 64
         self.last_observation = None
-        # self.heading = np.asarray((0.0, 0.0, 0.0))
 
         # face configurations
         self.face_config = FaceConfig()
-        self.face_param = FaceParam(mouth_speed=0.5, eye_left_speed=0.5, eye_right_speed=0.5, heading_speed=0.1)
-        self.heading = ShapeConfig(rotation=0.0)
+        self.face_param = FaceParam(mouth_speed=0.8, eye_left_speed=0.7, eye_right_speed=0.7, heading_speed=0.05)
+        self.heading = ShapeConfig(width=99999.0, rotation=0.0)
+        self.heading_count = 0.0
 
         # eye sets
         self.eye_status = 0
         self.focus = 10.0
         self.track = False
-        self.norm = ShapeConfig(width=1.0, height=1.0, size=0.3, curve=-0.25, rotation=0.0)
-        self.wink = ShapeConfig(width=1.3, height=0.2, size=0.2, curve=0.0, rotation=0.0)
-        self.happy = ShapeConfig(width=1.3, height=0.5, size=0.3, curve=-0.45, rotation=0.0)
-        self.confused = ShapeConfig(width=1.0, height=1.0, size=0.15, curve=-0.2, rotation=0.0)
+        self.norm = ShapeConfig(width=1.0, height=1.0, size=0.1, curve=-0.25, rotation=0.0)
+        self.wink = ShapeConfig(width=1.0, height=0.05, size=0.1, curve=-0.1, rotation=0.0)
+        self.happy = ShapeConfig(width=0.7, height=0.5, size=0.15, curve=-0.4, rotation=0.50)
+        self.confused = ShapeConfig(width=1.0, height=1.0, size=0.075, curve=0.0, rotation=0.0)
         self.eyes = [self.norm, self.wink, self.happy, self.confused]
         self.lasting = [10, 0.2, 5, 3]
         self.duration = rospy.Duration(5)
@@ -80,25 +82,31 @@ class FaceManager:
         rospy.Rate(1).sleep()
         self.pub_param.publish(self.face_param)
 
-        self.sub_rgb = rospy.Subscriber('camera', Image, queue_size=1, callback=self.rgb_cb)
-        self.sub_depth = rospy.Subscriber('depth', Image, queue_size=1, callback=self.depth_cb)
+        self.sub_rgb = rospy.Subscriber('/camera', Image, queue_size=1, callback=self.rgb_cb)
+        self.sub_depth = rospy.Subscriber('/depth', Image, queue_size=1, callback=self.depth_cb)
 
     def rgb_cb(self, msg):
+
+        if self.heading_count>0.0:
+            self.heading_count-=1.0
+            return
+
         img = cvb.imgmsg_to_cv2(msg, desired_encoding="bgr8")
         img = cv2.resize(img, (64, 64)).astype(float)/255
-        img = cv2.GaussianBlur(img, ksize=(7,7), sigmaX=3)
+        img = cv2.GaussianBlur(img, ksize=(5,5), sigmaX=3)
 
         if self.last_observation is not None:
-            diff = (np.abs(img-self.last_observation).max(axis=2)>0.25).nonzero()
+            diff = np.abs(img-self.last_observation).max(axis=2)
+            event = (diff>0.1).nonzero()
 
             # if there is any movement
-            if diff[0].shape[0]>0:
+            if event[0].shape[0]>0:
 
-                centroid = np.asarray(diff).mean(axis=1)
+                centroid = np.average(np.asarray(event), axis=1, weights=diff[event])
                 self.changeHeading(
                     centroid[1]/self._DOWN_SAMPLE_SIZE-0.5,
                     centroid[0]/self._DOWN_SAMPLE_SIZE-0.5)
-
+                
         self.last_observation = img
 
     def depth_cb(self, msg):
@@ -109,7 +117,8 @@ class FaceManager:
 
         self.depth = cv2.resize(depth, (self._DOWN_SAMPLE_SIZE, self._DOWN_SAMPLE_SIZE))
         self.focus = self.depth[focus_x, focus_y]
-        self.heading.width = math.exp(-self.focus)*0.2
+        if not np.isnan(self.focus):
+            self.heading.width = math.exp(-self.focus)*0.4
 
     def changeHeading(self,x=None,y=None,r=None):
         if x is not None:
@@ -122,6 +131,10 @@ class FaceManager:
             self.heading.rotation = -x/3.0            
         self.pub_head.publish(self.heading)
 
+        # reset heading count to wait for 5 images input
+        self.heading_count = 2.0
+
+
     def copyShape(self, dst: ShapeConfig, src: ShapeConfig, copy_size=False):
         dst.width = src.width
         dst.height = src.height
@@ -132,7 +145,7 @@ class FaceManager:
     def PickMouth(self, id, strength):
 
         self.copyShape(self.face_config.mouth, self.mouthes[id])
-        self.face_config.mouth.size = math.log10(max(strength-600, 1.0))/60+0.1
+        self.face_config.mouth.size = math.log10(max(strength-600, 1.0))/100+0.1
 
     def EyeMovement(self):
 
@@ -143,25 +156,7 @@ class FaceManager:
             self.last_change = rospy.Time.now()
             self.copyShape(self.face_config.eye_left, self.eyes[self.eye_status], copy_size=True)
             self.copyShape(self.face_config.eye_right, self.eyes[self.eye_status], copy_size=True)
-
-
-        # self.face_config.eye_left.offset_x = self.heading.offset_x-0.6 + 0.3*math.exp(-self.focus)
-        # self.face_config.eye_left.offset_y = self.heading.offset_y+0.2
-        # self.face_config.eye_right.offset_x = self.heading.offset_x+0.6 - 0.3*math.exp(-self.focus)
-        # self.face_config.eye_right.offset_y = self.heading.offset_y+0.2
-
-        # eye random movement
-        if np.random.randn(1)>5.0:
-            shift_x = np.random.randn(1)/10.0
-            shift_y = np.random.randn(1)/10.0
-            rot = np.random.randn(1)/10.0
-
-            self.face_config.eye_left.offset_x = -0.6+shift_x
-            self.face_config.eye_left.offset_y = +0.2+shift_y
-            self.face_config.eye_left.rotation = rot
-            self.face_config.eye_right.offset_x = +0.6+shift_x
-            self.face_config.eye_right.offset_y = +0.2+shift_y
-            self.face_config.eye_right.rotation = -rot
+            self.face_config.eye_right.rotation *= -1
 
     def publish(self):
 

@@ -3,7 +3,10 @@
   <arg name="full_screen" default="true"/>
   
   <!-- simulator -->
-  <node pkg="speaking_face" type="speaking.py" name="face_manager" output="screen"/>
+  <node pkg="speaking_face" type="speaking.py" name="face_manager" output="screen">
+    <remap from="/camera" to="/zed2/zed_node/rgb/image_rect_color"/>
+    <remap from="/depth" to="/zed2/zed_node/depth/depth_registered"/>
+  </node>
 
   <node pkg="speaking_face" type="face" name="robot_face">
     <param name="full_screen" value="$(arg full_screen)"/>

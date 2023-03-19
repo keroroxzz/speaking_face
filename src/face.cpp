@@ -98,6 +98,10 @@ void KeyPressFunc(unsigned char key, int x, int y)
     if(key==27){
         exit(0);
     }
+
+    else if(key==32){
+        glutReshapeWindow(640,480);
+    }
 }
 
 void ReloadShaders()
@@ -106,8 +110,8 @@ void ReloadShaders()
         delete eye_shader;
 
     eye_shader = new Shader(2);
-    eye_shader->addFromFile("/home/rtu/catkin_clip_topo/src/speaking_face/shaders/vertex/eye.vs", GL_VERTEX_SHADER);
-    eye_shader->addFromFile("/home/rtu/catkin_clip_topo/src/speaking_face/shaders/frag/eye.fs", GL_FRAGMENT_SHADER);
+    eye_shader->addFromFile((path+"/shaders/vertex/eye.vs").c_str(), GL_VERTEX_SHADER);
+    eye_shader->addFromFile((path+"/shaders/frag/eye.fs").c_str(), GL_FRAGMENT_SHADER);
 }
 
 void SpecialKeys(int key, int x, int y)
@@ -142,7 +146,7 @@ void idle()
     heading = heading*(1.0-face_param.heading_speed) + heading_target*face_param.heading_speed;
 
     glutPostRedisplay();
-    usleep(10);
+    usleep(50);
 }
 
 void mousePressed(int x_, int y_)
