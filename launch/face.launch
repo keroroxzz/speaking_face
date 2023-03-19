@@ -1,0 +1,12 @@
+<launch>
+  <!-- configs -->
+  <arg name="full_screen" default="true"/>
+  
+  <!-- simulator -->
+  <node pkg="speaking_face" type="speaking.py" name="face_manager" output="screen"/>
+
+  <node pkg="speaking_face" type="face" name="robot_face">
+    <param name="full_screen" value="$(arg full_screen)"/>
+  </node>
+
+</launch>

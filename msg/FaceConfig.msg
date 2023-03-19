@@ -1,0 +1,3 @@
+speaking_face/ShapeConfig eye_left
+speaking_face/ShapeConfig eye_right
+speaking_face/ShapeConfig mouth

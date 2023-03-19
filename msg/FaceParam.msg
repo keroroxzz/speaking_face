@@ -1,0 +1,3 @@
+float32 mouth_sensitivity
+float32 eye_left_sensitivity
+float32 eye_right_sensitivity
