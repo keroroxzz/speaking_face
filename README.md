@@ -1,7 +1,7 @@
 # ROS Simple Face
 A robot face pkg for ROS1
 
-# What it is?
+# What is this?
 
 This is a simple robot face animation implementation for ROS1, which renders a robot face with OpenGL and Shader.
 
