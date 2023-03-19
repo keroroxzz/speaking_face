@@ -205,7 +205,6 @@ int main(int argc, char* argv[])
 
     glutReshapeFunc(ChangeSize);
     glutKeyboardFunc(KeyPressFunc);
-    // glutSpecialFunc(SpecialKeys);
     glutDisplayFunc(RenderScene);
     glutIdleFunc(idle);
     // glutMotionFunc(mousePressed);

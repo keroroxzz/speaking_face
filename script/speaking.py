@@ -1,12 +1,10 @@
-#! /home/oreo/.pyenv/shims/python3
+#! /usr/bin/env python3
 
-import os, sys
-sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+import os
 import cv2
-sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import math
 import pyaudio
-import numpy as np
+import numpy as nps
 import copy as copy_module
 
 from io import BytesIO
