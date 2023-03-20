@@ -213,7 +213,7 @@ class Phoneme:
     
     def WaveToSpec(self, raw):
 
-        return np.fft.fft(np.fromstring(raw, dtype=np.int16))[self.mask]
+        return np.fft.fft(np.frombuffer(raw, dtype=np.int16))[self.mask]
 
     def SoundFeature(self, spectrum, segment=17):
 
@@ -256,6 +256,7 @@ class Speaker:
 
         self.sounds = []
         self.current_frame = None
+        self.current_sound = None
 
         self.fap = fap
 
@@ -263,6 +264,7 @@ class Speaker:
         self.state_pub = rospy.Publisher("Speaking_face/status", String, queue_size=10)
 
     def text_sub(self, msg: String):
+
         text = msg.data
         sound = self.TextToSpeech(text)
         self.sounds.append(sound)
@@ -271,33 +273,38 @@ class Speaker:
 
     def stream_callback(self, in_data, frame_size, time_info, status):
 
-        # get the frame for playing
-        self.current_frame = self.GetFrame(frame_size*2)
-        self.start+=frame_size*2
-
         # prepare a leading frame to parse the mouth
         parse_frame = self.GetFrame(frame_size=frame_size*2, leading=4096)
         if parse_frame is not None and len(parse_frame)>=self.frame_size*2:
             self.fap.MatchPhoneme(parse_frame)
         
+        # get the frame for playing
+        if not self.IsFrameEnd():
+            self.start += frame_size*2
+            
+        if not self.IsFrameEnd():
+            self.current_frame = self.GetFrame(frame_size*2)
+
         return (self.current_frame, pyaudio.paContinue)
     
+    def IsFrameEnd(self):
+       
+        return self.start>len(self.current_sound._data)
+
     def GetFrame(self, frame_size, leading=0):
-        beg = self.start+leading
-        end = self.start+leading+frame_size
+
+        beg = self.start+leading-frame_size
+        end = self.start+leading
         return self.current_sound._data[beg:end] if beg < len(self.current_sound._data) else None
 
     def Play(self):
-        if (self.stream is not None) and self.stream.is_active():
+        
+        if (self.current_sound is not None) and (not self.IsFrameEnd()):
             return
 
         if len(self.sounds)>0:
 
             print(f"Pop the last audio and speak...")
-
-            # release the resources
-            if self.stream is not None:
-                self.stream.close()
 
             self.current_sound = self.sounds.pop(0)
             self.start = 0
@@ -305,12 +312,19 @@ class Speaker:
             self.sample_width = self.current_sound.sample_width
             self.channels = self.current_sound.channels
             self.sample_rate = self.current_sound.frame_rate
+            
+            if self.stream is None:
+                self.stream = self.p.open(format=self.p.get_format_from_width(self.sample_width),
+                            channels=self.channels,
+                            rate=self.sample_rate,
+                            output=True,
+                            stream_callback=self.stream_callback)
+            self.stream.start_stream()
 
-            self.stream = self.p.open(format=self.p.get_format_from_width(self.sample_width),
-                        channels=self.channels,
-                        rate=self.sample_rate,
-                        output=True,
-                        stream_callback=self.stream_callback)
+        elif not self.stream.is_stopped():
+            self.stream.stop_stream()
+            print("No more sound data, stop the streaming...")
+
 
     def Terminate(self):
         if self.stream is not None:
