@@ -97,7 +97,13 @@ void KeyPressFunc(unsigned char key, int x, int y)
     }
 
     else if(key==32){
-        glutReshapeWindow(640,480);
+
+        full_screen=!full_screen;
+        
+        if(full_screen)
+            glutFullScreen();
+        else
+            glutReshapeWindow(640,480);
     }
 }
 

@@ -260,10 +260,10 @@ class Speaker:
 
         self.fap = fap
 
-        self.text_sub = rospy.Subscriber("speaking_face/text", String, callback=self.text_sub, queue_size=10)
-        self.state_pub = rospy.Publisher("Speaking_face/status", String, queue_size=10)
+        self.text_sub = rospy.Subscriber("/speaking_face/text", String, callback=self.text_cb, queue_size=10)
+        self.state_pub = rospy.Publisher("/speaking_face/status", String, queue_size=10)
 
-    def text_sub(self, msg: String):
+    def text_cb(self, msg: String):
 
         text = msg.data
         sound = self.TextToSpeech(text)
@@ -304,6 +304,7 @@ class Speaker:
 
         if len(self.sounds)>0:
 
+            self.state_pub.publish("SPEAKING")
             print(f"Pop the last audio and speak...")
 
             self.current_sound = self.sounds.pop(0)
@@ -322,6 +323,8 @@ class Speaker:
             self.stream.start_stream()
 
         elif not self.stream.is_stopped():
+            
+            self.state_pub.publish("SILENT")
             self.stream.stop_stream()
             print("No more sound data, stop the streaming...")
 
