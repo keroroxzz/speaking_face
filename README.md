@@ -47,7 +47,8 @@ Press Space to activate/deactivate fullscreen.
 
 ## Param
 
-    /robot_face/full_screen
+    full_screen
+    sample_rate
 
 ## Publish
 

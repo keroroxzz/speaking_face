@@ -15,6 +15,7 @@
 #include <speaking_face/FaceParam.h>
 #include <speaking_face/FaceConfig.h>
 #include <speaking_face/ShapeConfig.h>
+#include <speaking_face/MouseTouch.h>
 
 #include <stdlib.h> 
 #include <pthread.h>
@@ -30,6 +31,7 @@ using namespace chrono::_V2;
 
 //pkg path
 std::string path = ros::package::getPath("speaking_face");
+ros::Publisher mouse_pub;
 
 // shaders
 Shader *eye_shader;

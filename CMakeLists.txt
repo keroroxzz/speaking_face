@@ -36,6 +36,7 @@ add_message_files(
   ShapeConfig.msg
   FaceConfig.msg
   FaceParam.msg
+  MouseTouch.msg
 )
 
 generate_messages(

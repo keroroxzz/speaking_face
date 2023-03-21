@@ -103,7 +103,7 @@ void KeyPressFunc(unsigned char key, int x, int y)
         if(full_screen)
             glutFullScreen();
         else
-            glutReshapeWindow(640,480);
+            glutReshapeWindow(windowWidth, windowHeight);
     }
 }
 
@@ -123,6 +123,11 @@ void SpecialKeys(int key, int x, int y)
 
 void ChangeSize(int w, int h)
 {
+    glViewport(0, 0, w, h);
+
+    if(full_screen)
+        return;
+
     windowWidth = w;
     windowHeight = h;
 
@@ -133,9 +138,6 @@ void ChangeSize(int w, int h)
     aspect = max(aspect_yx, aspect_xy);
     vertical = max(1.0, aspect_yx);
     horizontal = max(1.0, aspect_xy);
-
-
-    glViewport(0, 0, windowWidth, windowHeight);
 }
 
 void idle()
@@ -147,6 +149,10 @@ void idle()
     eye_right = eye_right*(1.0-face_param.eye_right_speed) + eye_right_target*face_param.eye_right_speed;
     mouth_shape = mouth_shape*(1.0-face_param.mouth_speed) + mouth_shape_target*face_param.mouth_speed;
     heading = heading*(1.0-face_param.heading_speed) + heading_target*face_param.heading_speed;
+
+    if(ros::isShuttingDown()){
+        exit(0);
+    }
 
     glutPostRedisplay();
     usleep(50);
@@ -166,18 +172,28 @@ void mouseHover(int x_, int y_)
 
 void mouse(int button, int state, int x, int y)
 {
+    speaking_face::MouseTouch touch;
+    touch.button = button;
+    touch.state = state;
+    touch.x = x;
+    touch.y = y;
+    mouse_pub.publish(touch);
 }
-void heading_config_cb(const speaking_face::ShapeConfig::ConstPtr msg){
+
+void heading_config_cb(const speaking_face::ShapeConfig::ConstPtr msg)
+{
     copy(heading_target,*msg);
 }
 
-void face_config_cb(const speaking_face::FaceConfig::ConstPtr msg){
+void face_config_cb(const speaking_face::FaceConfig::ConstPtr msg)
+{
     copy(eye_left_target,msg->eye_left);
     copy(eye_right_target,msg->eye_right);
     copy(mouth_shape_target,msg->mouth);
 }
 
-void face_param_cb(const speaking_face::FaceParam::ConstPtr msg){
+void face_param_cb(const speaking_face::FaceParam::ConstPtr msg)
+{
     face_param.eye_left_speed = msg->eye_left_speed;
     face_param.eye_right_speed = msg->eye_right_speed;
     face_param.mouth_speed = msg->mouth_speed;
@@ -189,12 +205,15 @@ int main(int argc, char* argv[])
     ros::init(argc, argv, "RobotFace");
     ros::NodeHandle nh;
     ros::Subscriber sub_face, sub_param, sub_heading;
+
+    mouse_pub = nh.advertise<speaking_face::MouseTouch>("/speaking_face/mouse_touch", 1);
+
     sub_heading = nh.subscribe("/speaking_face/heading_config", 1, heading_config_cb);
     sub_face = nh.subscribe("/speaking_face/face_config", 1, face_config_cb);
     sub_param = nh.subscribe("/speaking_face/face_param", 1, face_param_cb);
 
     // Read the parameter
-    if (!nh.getParam ("/robot_face/full_screen", full_screen))
+    if (!nh.getParam ("full_screen", full_screen))
         full_screen = false;
 
     glutInit(&argc, argv);
@@ -210,9 +229,9 @@ int main(int argc, char* argv[])
     glutKeyboardFunc(KeyPressFunc);
     glutDisplayFunc(RenderScene);
     glutIdleFunc(idle);
+    glutMouseFunc(mouse);
     // glutMotionFunc(mousePressed);
     // glutPassiveMotionFunc(mouseHover);
-    // glutMouseFunc(mouse);
     if(full_screen)
         glutFullScreen();
 

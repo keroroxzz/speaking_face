@@ -249,9 +249,7 @@ class Speaker:
         self.p = pyaudio.PyAudio()
         self.stream = None
 
-        self.sample_width = 0
-        self.channels = 0
-        self.sample_rate = 0
+        self.sample_rate = rospy.get_param(f"/{rospy.get_name()}/sample_rate", 16000)
         self.frame_size = 1024
 
         self.sounds = []
@@ -259,6 +257,8 @@ class Speaker:
         self.current_sound = None
 
         self.fap = fap
+
+        print(f"Initialize the speaker with sample_rate={self.sample_rate}.")
 
         self.text_sub = rospy.Subscriber("/speaking_face/text", String, callback=self.text_cb, queue_size=10)
         self.state_pub = rospy.Publisher("/speaking_face/status", String, queue_size=10)
@@ -309,20 +309,16 @@ class Speaker:
 
             self.current_sound = self.sounds.pop(0)
             self.start = 0
-
-            self.sample_width = self.current_sound.sample_width
-            self.channels = self.current_sound.channels
-            self.sample_rate = self.current_sound.frame_rate
             
             if self.stream is None:
-                self.stream = self.p.open(format=self.p.get_format_from_width(self.sample_width),
-                            channels=self.channels,
-                            rate=self.sample_rate,
-                            output=True,
-                            stream_callback=self.stream_callback)
+                self.stream = self.p.open(format = self.p.get_format_from_width(self.current_sound.sample_width),
+                            channels = self.current_sound.channels,
+                            rate = self.sample_rate,
+                            output = True,
+                            stream_callback = self.stream_callback)
             self.stream.start_stream()
 
-        elif not self.stream.is_stopped():
+        elif self.stream is not None and not self.stream.is_stopped():
             
             self.state_pub.publish("SILENT")
             self.stream.stop_stream()
@@ -345,7 +341,7 @@ class Speaker:
         audio.seek(0)
 
         sound = AudioSegment.from_file(audio, format='mp3')
-        sound = sound.set_frame_rate(44100)
+        sound = sound.set_frame_rate(self.sample_rate)
         return sound
     
 
