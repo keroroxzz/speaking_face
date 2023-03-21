@@ -57,6 +57,7 @@ Press Space to activate/deactivate fullscreen.
     /speaking_face/heading_config
     /speaking_face/face_config
     /speaking_face/face_param
+    /speaking_face/mouse_touch
 
 ## Subscribe
 
