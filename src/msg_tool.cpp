@@ -72,3 +72,16 @@ ShapeConfig operator /(const ShapeConfig &src, float x){
     ret.offset_y = src.offset_y/x;
     return ret;
 }
+
+bool validate(ShapeConfig &src, bool correct){
+    bool ret=true;
+    if(!isnormal(src.curve)) src.curve=0.0, ret=false;
+    if(!isnormal(src.rotation)) src.rotation=0.0, ret=false;
+    if(!isnormal(src.size)) src.size=0.0, ret=false;
+    if(!isnormal(src.width)) src.width=0.0, ret=false;
+    if(!isnormal(src.height)) src.height=0.0, ret=false;
+    if(!isnormal(src.offset_x)) src.offset_x=0.0, ret=false;
+    if(!isnormal(src.offset_y)) src.offset_y=0.0, ret=false;
+    return ret;
+}
+

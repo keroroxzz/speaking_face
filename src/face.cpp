@@ -20,6 +20,8 @@ void RenderScene(void)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+
+    // move the camera to rotate the face
     gluLookAt(
         heading.offset_x,
         heading.offset_y, 
@@ -58,7 +60,7 @@ void RenderScene(void)
     glutSwapBuffers();
 
     #ifdef MEASURE_TIME
-    printf("rendering time: %f\n", (chrono::high_resolution_clock::now()-pclock).count()/1000000.0);
+    ROS_DEBUG("rendering time: %f\n", (chrono::high_resolution_clock::now()-pclock).count()/1000000.0);
     pclock = chrono::high_resolution_clock::now();
     #endif
 }
@@ -70,7 +72,7 @@ void SetupRC()
         !GL_ARB_shader_objects ||
         !GL_ARB_shading_language_100))
     {
-        fprintf(stderr, "GLSL extensions not available!\n");
+        ROS_WARN("GLSL extensions not available.\n");
         return;
     }
 
@@ -92,10 +94,11 @@ void SetupRC()
 
 void KeyPressFunc(unsigned char key, int x, int y)
 {
-    if(key==27){
+    // exit the face
+    if(key==27)
         exit(0);
-    }
 
+    // switch between fullscreen and normal
     else if(key==32){
 
         full_screen=!full_screen;
@@ -109,7 +112,7 @@ void KeyPressFunc(unsigned char key, int x, int y)
 
 void ReloadShaders()
 {
-    if(eye_shader)
+    if(eye_shader!=nullptr)
         delete eye_shader;
 
     eye_shader = new Shader(2);
@@ -119,6 +122,8 @@ void ReloadShaders()
 
 void SpecialKeys(int key, int x, int y)
 {
+    if(key==GLUT_KEY_F1)
+        ReloadShaders();
 }
 
 void ChangeSize(int w, int h)
@@ -143,16 +148,14 @@ void ChangeSize(int w, int h)
 void idle()
 {
     ros::spinOnce();
-    ReloadShaders();
 
     eye_left = eye_left*(1.0-face_param.eye_left_speed) + eye_left_target*face_param.eye_left_speed;
     eye_right = eye_right*(1.0-face_param.eye_right_speed) + eye_right_target*face_param.eye_right_speed;
     mouth_shape = mouth_shape*(1.0-face_param.mouth_speed) + mouth_shape_target*face_param.mouth_speed;
     heading = heading*(1.0-face_param.heading_speed) + heading_target*face_param.heading_speed;
 
-    if(ros::isShuttingDown()){
+    if(ros::isShuttingDown())
         exit(0);
-    }
 
     glutPostRedisplay();
     usleep(50);
@@ -160,14 +163,12 @@ void idle()
 
 void mousePressed(int x_, int y_)
 {
-}
-
-void mouseHover(int x_, int y_)
-{
-    float x = 2.0 * (float)x_ / windowWidth - 1.0;
-    float y = 2.0 * (float)y_ / windowHeight - 1.0;
-    pmouse[0]=x;
-    pmouse[1]=y;
+    speaking_face::MouseTouch touch;
+    touch.button = -1;
+    touch.state = -1;
+    touch.x = x_;
+    touch.y = y_;
+    mouse_pub.publish(touch);
 }
 
 void mouse(int button, int state, int x, int y)
@@ -183,6 +184,10 @@ void mouse(int button, int state, int x, int y)
 void heading_config_cb(const speaking_face::ShapeConfig::ConstPtr msg)
 {
     copy(heading_target,*msg);
+
+    // validate the config to prevent nan or inf that will blow away the face
+    validate(heading_target);
+    validate(heading);
 }
 
 void face_config_cb(const speaking_face::FaceConfig::ConstPtr msg)
@@ -190,6 +195,14 @@ void face_config_cb(const speaking_face::FaceConfig::ConstPtr msg)
     copy(eye_left_target,msg->eye_left);
     copy(eye_right_target,msg->eye_right);
     copy(mouth_shape_target,msg->mouth);
+
+    // validate the config to prevent nan or inf that will blow away the face
+    validate(eye_left_target);
+    validate(eye_right_target);
+    validate(mouth_shape_target);
+    validate(eye_left);
+    validate(eye_right);
+    validate(mouth_shape);
 }
 
 void face_param_cb(const speaking_face::FaceParam::ConstPtr msg)
@@ -202,6 +215,25 @@ void face_param_cb(const speaking_face::FaceParam::ConstPtr msg)
 
 int main(int argc, char* argv[])
 {
+    // OpenGL
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+    glutInitWindowSize(windowWidth, windowHeight);
+    glutCreateWindow("Fight Simulator - alpha");
+    
+    ReloadShaders();
+
+    glutIdleFunc(idle);
+    glutReshapeFunc(ChangeSize);
+    glutDisplayFunc(RenderScene);
+    glutMouseFunc(mouse);
+    glutMotionFunc(mousePressed);
+    glutSpecialFunc(SpecialKeys);
+    glutKeyboardFunc(KeyPressFunc);
+
+    SetupRC();
+
+    // ROS intialization
     ros::init(argc, argv, "RobotFace");
     ros::NodeHandle nh;
     ros::Subscriber sub_face, sub_param, sub_heading;
@@ -215,27 +247,11 @@ int main(int argc, char* argv[])
     // Read the parameter
     if (!nh.getParam ("full_screen", full_screen))
         full_screen = false;
-
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(windowWidth, windowHeight);
-    glutCreateWindow("Fight Simulator - alpha");
-
-    eye_shader = new Shader(2);
-    eye_shader->addFromFile("/home/rtu/catkin_clip_topo/src/speaking_face/shaders/vertex/eye.vs", GL_VERTEX_SHADER);
-    eye_shader->addFromFile("/home/rtu/catkin_clip_topo/src/speaking_face/shaders/frag/eye.fs", GL_FRAGMENT_SHADER);
-
-    glutReshapeFunc(ChangeSize);
-    glutKeyboardFunc(KeyPressFunc);
-    glutDisplayFunc(RenderScene);
-    glutIdleFunc(idle);
-    glutMouseFunc(mouse);
-    // glutMotionFunc(mousePressed);
-    // glutPassiveMotionFunc(mouseHover);
-    if(full_screen)
+       
+    if (full_screen)
         glutFullScreen();
 
-    SetupRC();
+    // Startup
     glutMainLoop();
 
     return 0;

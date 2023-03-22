@@ -5,6 +5,7 @@
 */
 
 #include <ros/ros.h>
+#include <math.h>
 #include <speaking_face/FaceParam.h>
 #include <speaking_face/FaceConfig.h>
 #include <speaking_face/ShapeConfig.h>
@@ -18,4 +19,4 @@ ShapeConfig operator +(const ShapeConfig &a, const ShapeConfig &b);
 ShapeConfig operator -(const ShapeConfig &a, const ShapeConfig &b);
 ShapeConfig operator *(const ShapeConfig &a, float x);
 ShapeConfig operator /(const ShapeConfig &a, float x);
-
+bool validate(ShapeConfig &src, bool correct=true);

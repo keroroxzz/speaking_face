@@ -2,11 +2,13 @@
   <!-- configs -->
   <arg name="full_screen" default="true"/>
   <arg name="sample_rate" default="16000"/>
+  <arg name="rgb_topic" default="/zed2/zed_node/rgb/image_rect_color"/>
+  <arg name="depth_topic" default="/zed2/zed_node/depth/depth_registered"/>
   
   <!-- simulator -->
   <node pkg="speaking_face" type="speaking.py" name="face_manager" output="screen">
-    <remap from="/camera" to="/zed2/zed_node/rgb/image_rect_color"/>
-    <remap from="/depth" to="/zed2/zed_node/depth/depth_registered"/>
+    <remap from="/camera" to="$(arg rgb_topic)"/>
+    <remap from="/depth" to="$(arg depth_topic)"/>
     <param name="sample_rate" value="$(arg sample_rate)"/>
   </node>
 

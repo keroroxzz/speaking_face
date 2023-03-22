@@ -34,7 +34,7 @@ std::string path = ros::package::getPath("speaking_face");
 ros::Publisher mouse_pub;
 
 // shaders
-Shader *eye_shader;
+Shader *eye_shader = nullptr;
 
 // glwindow
 bool full_screen;
