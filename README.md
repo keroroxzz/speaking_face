@@ -25,8 +25,10 @@ Also, make sure you have the OpenGL library.
     
     apt-get install build-essential
     apt-get install libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
-    apt-get install libglew1.8 libglew-dev
+    
+Or, if you installed ROS in Conda and build workspace with that Conda env.
 
+    conda install -c conda-forge mesa-libgl-cos7-x86_64 libglu freeglut
 
 # Installation
 

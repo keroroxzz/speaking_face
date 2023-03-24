@@ -19,14 +19,6 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 
-set(GLFW_INCLUDE_PATH "" CACHE PATH "The directory that contains GL/glfw.h" )
-set(GLFW_LIBRARY "" CACHE FILEPATH "libglfw.a or glfw.lib" )
-
-set(GLEW_INCLUDE_PATH "" CACHE PATH "The directory that contains GL/glew.h" )
-set(GLEW_LIBRARY "" CACHE FILEPATH "libglew.a or glew.lib" )
-
-set(GLM_INCLUDE_PATH "" CACHE PATH "The directory that contains glm/glm.hpp" )
-
 ################################################
 ## Declare ROS messages, services and actions ##
 ################################################
@@ -64,11 +56,8 @@ file(GLOB_RECURSE SOURCE_FILES
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-	${GLFW_INCLUDE_PATH}
-	${GLEW_INCLUDE_PATH}
-	${GLM_INCLUDE_PATH}
 )
 
 add_executable(face ${SOURCE_FILES})
-target_link_libraries(face ${catkin_LIBRARIES} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
+target_link_libraries(face ${catkin_LIBRARIES} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} -lglut) # explicitly ass -lglut to address awkward issue for building in conda env
 add_dependencies(face ${catkin_EXPORTED_TARGETS})

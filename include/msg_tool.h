@@ -1,7 +1,7 @@
 /*
     Robot Face Animation Msg Tool
     By Brian Tu
-    Date : 2023/03/20
+    Date : 2023/03/24
 */
 
 #include <ros/ros.h>
@@ -10,6 +10,7 @@
 #include <speaking_face/FaceConfig.h>
 #include <speaking_face/ShapeConfig.h>
 
+using namespace std;
 using namespace speaking_face;
 
 
